@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUGO Cycling Club - Secret Sugo</title>
+    <style>
+        :root {
+            --bg-deep: #064e3b; /* Festive Pine Green */
+            --bg-card: #14532d; /* Rich Forest Green */
+            --accent-red: #b91c1c; /* Christmas Red */
+            --text-light: #f8fafc;
+        }
+
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg-deep); 
+            color: var(--text-light); 
+            text-align: center; 
+            padding: 20px; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- BACKGROUND LIGHTS & ANIMATIONS CONTAINER --- */
+        #bg-lights-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* --- TWINKLING SUGO LOGOS --- */
+        .sugo-light {
+            position: absolute;
+            pointer-events: none;
+            filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.25));
+            opacity: 0;
+            animation: twinkle 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.05; transform: scale(0.9); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+            100% { opacity: 0.05; transform: scale(0.9); }
+        }
+
+        /* --- BOUNCING CYCLISTS --- */
+        .cyclist {
+            position: absolute;
+            font-size: 2.2rem;
+            pointer-events: none;
+            user-select: none;
+            z-index: 1;
+            opacity: 0.75;
+            transition: transform 0.1s linear;
+        }
+
+        /* --- FALLING SNOW EFFECT --- */
+        .snowflake {
+            position: absolute;
+            top: -10px;
+            background: #ffffff;
+            border-radius: 50%;
+            opacity: 0.8;
+            pointer-events: none;
+            animation: fall linear infinite;
+            z-index: 1;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-10px) translateX(0); }
+            100% { transform: translateY(105vh) translateX(20px); }
+        }
+
+        /* --- APP CARD STYLING --- */
+        .card { 
+            background: rgba(20, 83, 45, 0.92); 
+            backdrop-filter: blur(8px);
+            border-radius: 20px; 
+            padding: 35px; 
+            max-width: 420px; 
+            width: 100%; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5); 
+            border: 2px solid #22c55e33; 
+            box-sizing: border-box;
+            position: relative;
+            z-index: 2;
+        }
+
+        h2 {
+            color: #fca5a5;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            margin-top: 0;
+        }
+
+        select, input[type="email"] { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 15px 0; 
+            border-radius: 10px; 
+            border: 1px solid #15803d; 
+            background: #064e3b; 
+            color: white; 
+            font-size: 1rem; 
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        select:focus, input[type="email"]:focus {
+            border-color: #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+        }
+
+        select option:disabled { 
+            color: #6b7280; 
+            background: #064e3b; 
+            font-style: italic; 
+        }
+
+        button { 
+            background: var(--accent-red); 
+            color: white; 
+            border: none; 
+            padding: 14px 24px; 
+            font-size: 1rem; 
+            font-weight: bold; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            width: 100%; 
+            transition: background 0.2s, transform 0.1s; 
+            box-sizing: border-box;
+            box-shadow: 0 4px 12px rgba(185, 28, 28, 0.4);
+        }
+
+        button:hover { 
+            background: #dc2626; 
+            transform: translateY(-1px);
+        }
+
+        .recipient-box { 
+            background: #064e3b; 
+            color: #4ade80; 
+            border: 2px dashed #16a34a;
+            border-radius: 12px; 
+            padding: 20px; 
+            font-size: 1.8rem; 
+            font-weight: bold; 
+            margin: 15px 0; 
+            word-break: break-word; 
+        }
+
+        .notice-box {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            line-height: 1.4;
+            text-align: left;
+            border-left: 3px solid #fbbf24;
+        }
+
+        .hidden { 
+            display: none; 
+        }
+        
+        .error { 
+            color: #fca5a5; 
+            font-weight: bold; 
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Container for background animations -->
+    <div id="bg-lights-container"></div>
+
+    <!-- Main App Card -->
+    <div class="card" id="app">
+        <h2>🎄 Secret Sugo 🎄</h2>
+        <div id="loading">Loading participants list...</div>
+        
+        <div id="form-container" class="hidden">
+            <p>Select your name from the club list:</p>
+            <select id="name-select">
+                <option value="">-- Choose your name --</option>
+            </select>
+            
+            <p>Enter your email address:</p>
+            <input type="email" id="email-input" placeholder="your.email@example.com" required>
+            
+            <button onclick="revealPair()">🎁 Reveal My Secret Santa</button>
+        </div>
+
+        <div id="result-container" class="hidden">
+            <p>Ho Ho Ho! You are the Secret Santa for:</p>
+            <div class="recipient-box" id="recipient-name"></div>
+            <p style="color: #4ade80; font-size: 0.9rem; margin-bottom: 5px;">✅ Confirmation email sent successfully!</p>
+            
+            <div class="notice-box">
+                <p style="margin: 0 0 8px 0;">🛍️ <strong>Gift Budget:</strong> To keep things balanced, we recommend a spend between <strong>£10 and £20</strong>.</p>
+                <p style="margin: 0;">📸 <strong>Important:</strong> To keep matches secret, you won't be able to log back in to check this later. <strong>Take a screenshot</strong> of this screen now!</p>
+            </div>
+        </div>
+
+        <div id="error-container" class="hidden">
+            <p class="error" id="error-message"></p>
+        </div>
+    </div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwy1bixhTF-kLxhWwpc-HJyX1h1sSCYWgdlXL4iiyrHUyRqode8DMvm0WVRKB_aBqQR/exec";
+
+    // --- GENERATE SPACED, FULL-SCREEN SUGO CHRISTMAS LIGHTS ---
+    function createSugoLights() {
+        const container = document.getElementById('bg-lights-container');
+        const count = 12;
+        const gridCells = [];
+
+        const cols = 4;
+        const rows = 3;
+        const cellWidth = 100 / cols;
+        const cellHeight = 100 / rows;
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                gridCells.push({
+                    xMin: c * cellWidth + 3,
+                    xMax: (c + 1) * cellWidth - 10,
+                    yMin: r * cellHeight + 3,
+                    yMax: (r + 1) * cellHeight - 10
+                });
+            }
+        }
+
+        gridCells.sort(() => Math.random() - 0.5);
+
+        gridCells.slice(0, count).forEach((cell, index) => {
+            const img = document.createElement('img');
+            img.src = 'sugo-xs.png';
+            img.classList.add('sugo-light');
+
+            const posX = Math.random() * (cell.xMax - cell.xMin) + cell.xMin;
+            const posY = Math.random() * (cell.yMax - cell.yMin) + cell.yMin;
+            img.style.left = posX + 'vw';
+            img.style.top = posY + 'vh';
+
+            const width = Math.floor(Math.random() * 35) + 60;
+            img.style.width = width + 'px';
+
+            const rotation = Math.floor(Math.random() * 50) - 25;
+            img.style.transform = `rotate(${rotation}deg)`;
+
+            container.appendChild(img);
+
+            setTimeout(() => {
+                const duration = (Math.random() * 2 + 3).toFixed(2);
+                const delay = (Math.random() * 2).toFixed(2);
+                img.style.animation = `twinkle ${duration}s ease-in-out ${delay}s infinite alternate`;
+            }, index * 250 + 300);
+        });
+    }
+    createSugoLights();
+
+    // --- DYNAMIC DIAGONAL BOUNCING CYCLISTS ---
+    function initBouncingCyclists() {
+        const container = document.getElementById('bg-lights-container');
+        const cyclistEmojis = ['🚴🏽‍♀️', '🚴🏻‍♂️', '🚴🏾‍♀️', '🚴🏼‍♂️', '🚴🏿‍♀️', '🚴🏽‍♂️'];
+        const cyclists = [];
+        const count = 5;
+
+        for (let i = 0; i < count; i++) {
+            const el = document.createElement('div');
+            el.classList.add('cyclist');
+            el.innerText = cyclistEmojis[Math.floor(Math.random() * cyclistEmojis.length)];
+            container.appendChild(el);
+
+            let x = Math.random() * (window.innerWidth - 100) + 50;
+            let y = Math.random() * (window.innerHeight - 100) + 50;
+
+            let vx = (Math.random() * 0.5 + 0.35) * (Math.random() < 0.5 ? 1 : -1);
+            let vy = (Math.random() * 0.5 + 0.35) * (Math.random() < 0.5 ? 1 : -1);
+
+            cyclists.push({ el, x, y, vx, vy });
+        }
+
+        function update() {
+            const maxX = window.innerWidth - 50;
+            const maxY = window.innerHeight - 50;
+
+            cyclists.forEach(c => {
+                c.x += c.vx;
+                c.y += c.vy;
+
+                if (c.x <= 20) {
+                    c.x = 20;
+                    c.vx *= -1;
+                } else if (c.x >= maxX) {
+                    c.x = maxX;
+                    c.vx *= -1;
+                }
+
+                if (c.y <= 20) {
+                    c.y = 20;
+                    c.vy *= -1;
+                } else if (c.y >= maxY) {
+                    c.y = maxY;
+                    c.vy *= -1;
+                }
+
+                let scaleX = c.vx > 0 ? -1 : 1;
+                c.el.style.transform = `translate(${c.x}px, ${c.y}px) scaleX(${scaleX})`;
+            });
+
+            requestAnimationFrame(update);
+        }
+
+        requestAnimationFrame(update);
+    }
+    initBouncingCyclists();
+
+    // --- GENERATE FALLING SNOWFLAKES ---
+    function createSnowflakes() {
+        const snowCount = 30;
+        for (let i = 0; i < snowCount; i++) {
+            const snowflake = document.createElement('div');
+            snowflake.classList.add('snowflake');
+            
+            snowflake.style.left = Math.random() * 100 + 'vw';
+            const size = Math.random() * 4 + 2 + 'px';
+            snowflake.style.width = size;
+            snowflake.style.height = size;
+            
+            const duration = Math.random() * 5 + 3 + 's';
+            snowflake.style.animationDuration = duration;
+            snowflake.style.animationDelay = Math.random() * 5 + 's';
+            
+            document.body.appendChild(snowflake);
+        }
+    }
+    createSnowflakes();
+
+    // JSONP helper function to bypass Google Apps Script CORS restrictions
+    function fetchJSONP(url, callbackName) {
+        return new Promise((resolve, reject) => {
+            window[callbackName] = function(data) {
+                delete window[callbackName];
+                document.body.removeChild(script);
+                resolve(data);
+            };
+            const script = document.createElement('script');
+            script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + callbackName;
+            script.onerror = () => reject(new Error('Script load error'));
+            document.body.appendChild(script);
+        });
+    }
+
+    // Load available/claimed names on open
+    window.onload = async function() {
+        try {
+            let data = await fetchJSONP(`${SCRIPT_URL}?action=getParticipants`, 'cb_getParticipants');
+            
+            document.getElementById('loading').classList.add('hidden');
+
+            if (data.status === 'success') {
+                let select = document.getElementById('name-select');
+                data.participants.forEach(p => {
+                    let opt = document.createElement('option');
+                    opt.value = p.name;
+                    if (p.hasClaimed) {
+                        opt.textContent = `${p.name} (Claimed)`;
+                        opt.disabled = true;
+                    } else {
+                        opt.textContent = p.name;
+                    }
+                    select.appendChild(opt);
+                });
+                document.getElementById('form-container').classList.remove('hidden');
+            } else {
+                showError(data.message);
+            }
+        } catch (err) {
+            document.getElementById('loading').classList.add('hidden');
+            showError("Failed to connect to Google Apps Script backend.");
+        }
+    };
+
+    // User submits name and email
+    async function revealPair() {
+        const selectedName = document.getElementById('name-select').value;
+        const email = document.getElementById('email-input').value;
+
+        if (!selectedName) {
+            alert('Please select your name from the dropdown.');
+            return;
+        }
+        if (!email || !email.includes('@')) {
+            alert('Please enter a valid email address.');
+            return;
+        }
+
+        document.getElementById('form-container').classList.add('hidden');
+        document.getElementById('loading').innerText = "🎄 Unwrapping your match & sending email...";
+        document.getElementById('loading').classList.remove('hidden');
+
+        try {
+            let url = `${SCRIPT_URL}?action=claim&name=${encodeURIComponent(selectedName)}&email=${encodeURIComponent(email)}`;
+            let data = await fetchJSONP(url, 'cb_claim');
+
+            document.getElementById('loading').classList.add('hidden');
+
+            if (data.status === 'error') {
+                showError(data.message);
+                document.getElementById('form-container').classList.remove('hidden');
+            } else {
+                document.getElementById('recipient-name').innerText = data.recipient;
+                document.getElementById('result-container').classList.remove('hidden');
+            }
+        } catch (err) {
+            document.getElementById('loading').classList.add('hidden');
+            showError("An error occurred while claiming your pair.");
+        }
+    }
+
+    function showError(msg) {
+        document.getElementById('error-message').innerText = msg;
+        document.getElementById('error-container').classList.remove('hidden');
+    }
+</script>
+
+</body>
+</html>
